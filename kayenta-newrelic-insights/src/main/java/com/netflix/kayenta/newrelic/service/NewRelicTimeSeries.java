@@ -31,20 +31,38 @@ public class NewRelicTimeSeries {
   private NewresultResultMetadata metadata;
 
   @Data
-  static public class NewRelicSeriesEntry {
+  public static class NewRelicSeriesEntry {
 
     private Long beginTimeSeconds;
     private Long inspectedCount;
     private Long endTimeSeconds;
-    private List<HashMap<String, Number>> results;
+    private List<HashMap<String, Object>> results;
 
     @JsonIgnore
-    private Double adjustSingleResult(HashMap<String, Number> entry) {
-      final Number num = entry.values().iterator().next();
+    private Double adjustSingleResult(HashMap<String, Object> entry) {
+      // use first entry in results HashMap
+      Object node = entry.values().iterator().next();
+      final Number num = extractValue(node);
+
       if (inspectedCount == 0L || num == null) {
         return Double.NaN;
       } else {
         return num.doubleValue();
+      }
+    }
+
+    /**
+     * Finds the value in the JSONNode, even if the value is below another JSONNode
+     *
+     * @param node JSONNode to look for value in
+     * @return the value
+     */
+    @JsonIgnore
+    private Number extractValue(Object node) {
+      if (node instanceof HashMap) {
+        return (Number) ((HashMap) node).values().iterator().next();
+      } else {
+        return (Number) node;
       }
     }
 
@@ -59,7 +77,7 @@ public class NewRelicTimeSeries {
   }
 
   @Data
-  static public class NewresultResultMetadata {
+  public static class NewresultResultMetadata {
 
     private Long beginTimeMillis;
     private Long endTimeMillis;
